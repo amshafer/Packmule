@@ -1,0 +1,33 @@
+#! /bin/sh
+
+# a very user specific script to run a freebsd vm,
+# you'll definitely have to change this depending on your system
+# for the original commands check out the handbook (bhyve section)
+
+# Austin Shafer - 2017
+
+USER=ashafer
+
+# prints and runs command given
+cmd() {
+      echo "$@"
+      "$@"
+}
+
+# required network configuration. might need bridge0 with member alc0...
+TAP=`ifconfig tap0`
+
+if ["${TAP}" = "" ] ; then
+   echo "Configuring network interfaces..."
+   ifconfig tap0 create
+   ifconfig bridge0 addm tap0
+fi
+
+echo "Checking arguments"
+if [$1 == ""] ; then
+   echo "Usage: runbsdguest /path/to/.iso"
+   exit
+fi
+
+# run 
+sh /usr/share/examples/bhyve/vmrun.sh -c 1 -m 1024M -t tap0 -d ~${USER}/hyve/bsdguest/custom-bsd.img -I ${1} -i bsdguest

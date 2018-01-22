@@ -90,8 +90,7 @@ sub write_new_img() {
     print "VOLUME_LABEL = $volume_label\n";
 
     # run machine dependent script to build install .iso
-    `sh /usr/src/release/$target/mkisoimages.sh -b $volume_label \
-    $newisoname $workroot`;
+    `sh /usr/src/release/$target/mkisoimages.sh -b $volume_label $newisoname $workroot`;
 }
 
 # ################################################

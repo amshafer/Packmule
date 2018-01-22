@@ -7,4 +7,4 @@ USER=ashafer
 INSTALLDISK="~${USER}/hyve/.iso/FreeBSD-11.1-RELEASE-amd64-disc1.iso"
 PACK_LIST="~${USER}/bin/bsdpack/bsdplist.txt"
 
-sh bsdpack.sh ${INSTALLDISK} ${PACK_LIST}
+packmule ${INSTALLDISK} ${PACK_LIST}

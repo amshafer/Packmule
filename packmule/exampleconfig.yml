@@ -1,0 +1,6 @@
+PKGS:
+ - nethack
+ - fish
+CUSTOM:
+ /etc/resolv.conf : /etc/resolv.conf
+ /etc/hosts : /etc/hosts

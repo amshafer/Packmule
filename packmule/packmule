@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/local/bin/perl
 
 # ###############################################
 #
@@ -17,30 +17,29 @@
 # the file system to /tmp/bsd_iso_work. Packages and software is
 # added to under /tmp/bsd_iso_work and written to a new .iso image
 
+use strict;
+use warnings;
+
 use YAML;
-use Data:Dumper;
+use Data::Dumper;
 
 # global variables
-$mntdir = "/mnt/bsd_iso";
-$workdir = "/tmp/bsd_iso_work";
-$pkgroot = "/tmp/bsd_iso_pkgs";
-$distdir = "$workroot/usr/freebsd-dist";
-$md_dev = 4;
+my $mntdir = "/mnt/bsd_iso";
+my $workroot = "/tmp/bsd_iso_work";
+my $pkgroot = "/tmp/bsd_iso_pkgs";
+my $distdir = "$workroot/usr/freebsd-dist";
+my $md_dev = 4;
 
-$pkg = "pkg -r $pkgroot";
+my $pkg = "export ASSUME_ALWAYS_YES=yes; pkg -r $pkgroot";
 
-# non interactive pkg
-`export ASSUME_ALWAYS_YES=yes`
+# the packing list config file
+my $plist = "packmule.yml";
+# the name of the image to generate
+my $isoname = "null";
 
 # ################################################
 # Function declarations
 # ################################################
-
-# prints out the command and runs it
-sub cmd {
-    print "@_\n";
-    `@_`;
-}
 
 # mounts isoname at mntdir
 sub mount_img () {
@@ -67,18 +66,21 @@ sub unmount_img() {
 sub write_new_img() {
 
     # change name from FreeBSD___.iso to FreeBSD___-packed.iso
-    $newisoname = $isoname;
+    my $newisoname = $isoname;
     # remove segments of form /*/ and .iso
     $newisoname =~ s/(\/.*\/|\.iso)//g;
     $newisoname = "$newisoname-packed.iso";
 
     print "Writing new install package ./$newisoname\n";
 
-    if ($newisoname =~ /-{3}(.*)-/) {
-	$target = $1;
+    my $target;
+    # 4th group of something followed by '-'
+    if ($newisoname =~ /(([^-]*)-){4}/) {
+	$target = $2;
     }
     
-    # 
+    # construct volume label from isoname
+    my $volume_label;
     if ($newisoname =~ /-(.*)-.*/) {
 	$volume_label = $1;
 	# change all dots and slashes to underscores
@@ -103,18 +105,13 @@ sub remove_dirs() {
 # BEGIN MAIN
 # ################################################ 
 
-# the packing list config file
-$plist = "packmule.yaml";
-# the name of the image to generate
-$isoname = "null";
-
 # process command line arguments
 while (@ARGV != 0) {
     my $arg = shift;
 
-    if (arg eq "-y") {
+    if ($arg eq "-y") {
 	$plist = shift; 
-    } else if ($isoname eq "null") {
+    } elsif ($isoname eq "null") {
 	$isoname = $arg;
     } else {
 	print "Skipping unrecognized argument $arg\n";
@@ -123,46 +120,51 @@ while (@ARGV != 0) {
 
 # isoname must be set
 if ($isoname eq "null") {
-    print "Usage: packmule [-y /path/to/config.yaml] isoname\n";
+    print "Usage: packmule [-y /path/to/config.yml] isoname\n";
     print "       (Default config is ./packmule.yaml)\n";
     exit(1);
 }
 
-my $config = LoadFile($plist);
+my $config = YAML::LoadFile($plist);
 
 # DEBUG
 print Dumper($config), "\n";
 
-exit;
-
 # create directories if needed
-remove_dirs
-mkdir -p ${MNTDIR}
-mkdir -p ${WORKROOT}
-mkdir -p ${PKGROOT}
+remove_dirs;
+`mkdir -p $mntdir`;
+`mkdir -p $workroot`;
+`mkdir -p $pkgroot`;
 
 # mount the .iso
 mount_img;
 
 # copy image to r/w direcotry $workroot
-print "--------------------------------------------------";
-print "Copying filesystem from $mntdir to $workroot...";
-print "--------------------------------------------------";
+print "--------------------------------------------------\n";
+print "Copying filesystem from $mntdir to $workroot...\n";
+print "--------------------------------------------------\n";
 `cp -R $mntdir/* $workroot/`;
 
 # use pkg to fill new image tree
-print "--------------------------------------------------";
-print "Installing packages in $workroot...";
-print "--------------------------------------------------";
-
-# configure installation
-install_config;
+print "--------------------------------------------------\n";
+print "Installing packages in $workroot...\n";
+print "--------------------------------------------------\n";
 
 # install packages in directory to tar
-my $packages = `cat $plist`;
 
-for my $p ($packages) {
-    cmd $pkg install $p;
+# dereference array PKGS references
+my @packages = @{$config->{PKGS}};
+for my $p (@packages) {
+    print "$pkg install $p\n";
+    `$pkg install $p\n`;
+}
+
+#dereference hash CUSTOM references
+my %customs = %{$config->{CUSTOM}};
+for my $c (keys %customs){
+    my $val = %customs{$c};
+    print "cp $c $pkgroot/$val\n";
+    `cp $c $pkgroot/$val\n`;
 }
 
 # pack up the custom stuff as a distribution tar

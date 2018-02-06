@@ -18,10 +18,10 @@
 # added to under /tmp/bsd_iso_work and written to a new .iso image
 
 use strict;
-use warnings;
 
 use YAML;
-use Data::Dumper;
+use Cwd;
+use Digest::SHA;
 
 # global variables
 my $mntdir = "/mnt/bsd_iso";
@@ -31,6 +31,7 @@ my $distdir = "$workroot/usr/freebsd-dist";
 my $md_dev = 4;
 
 my $pkg = "export ASSUME_ALWAYS_YES=yes; pkg -r $pkgroot";
+my $distname = "packmule-pkgs.txz";
 
 # the packing list config file
 my $plist = "packmule.yml";
@@ -53,7 +54,7 @@ sub mount_img () {
 
 # ################################################
 # unmounts ISONAME at MNTDIR
-sub unmount_img() {
+sub unmount_img () {
     print "Unmounting $isoname from $mntdir\n";
 
     `umount $mntdir`;
@@ -62,14 +63,40 @@ sub unmount_img() {
 }
 
 # ################################################
+# adds $distname to /usr/freebsd-dist/MANIFEST
+sub manifest_add () {
+    my $distdir = "/usr/freebsd-dist/";
+    
+    open(my $dist, "<", "$workroot/$distdir/$distname");
+    binmode($dist);
+
+    # generate sha256 checksum
+    my $hash = Digest::SHA->new(256)->addfile($dist)->hexdigest;
+    close $dist;
+
+    # calculate number of archived packages
+    my $nfiles = `tar -t -f $workroot/$distdir/$distname | wc -l`;
+    # trim whitespace
+    $nfiles =~ s/[^0-9]//g;
+
+    # append packmule-pkgs.txz to $distdir/MANIFEST
+    open(my $manifest, ">>", "$workroot/$distdir/MANIFEST");
+
+    # from /usr/src/release/scripts/make-manifest.sh
+    print $manifest "$distname\t$hash\t$nfiles\tpackmule\t\"Packmule custom pkgs\"\ton\n";
+
+    close $manifest;
+}
+
+# ################################################
 # writes WORKROOT to a new .iso file
-sub write_new_img() {
+sub write_new_img () {
 
     # change name from FreeBSD___.iso to FreeBSD___-packed.iso
-    my $newisoname = $isoname;
-    # remove segments of form /*/ and .iso
-    $newisoname =~ s/(\/.*\/|\.iso)//g;
-    $newisoname = "$newisoname-packed.iso";
+    my $newisoname;
+    if ($isoname =~ /.*\/([^\/]*).iso/) {
+	$newisoname = "$1-packed.iso";
+    }
 
     print "Writing new install package ./$newisoname\n";
 
@@ -126,9 +153,6 @@ if ($isoname eq "null") {
 
 my $config = YAML::LoadFile($plist);
 
-# DEBUG
-print Dumper($config), "\n";
-
 # create directories if needed
 remove_dirs;
 `mkdir -p $mntdir`;
@@ -168,12 +192,17 @@ for my $c (keys %customs){
 
 # pack up the custom stuff as a distribution tar
 print "--------------------------------------------------\n";
-print "Creating distribution file $distdir/custom-pkgs.txz...\n";
+print "Creating distribution file $distdir/$distname...\n";
 print "--------------------------------------------------\n";
 
-`cd $pkgroot`;
-`tar -cvJpf $distdir/custom-pkgs.txz ./`;
-`cd -`;
+my $startdir = getcwd;
+
+chdir "$pkgroot" || die "cannot change to $pkgroot\n";
+`tar -cvJpf $distdir/$distname ./`;
+chdir "$startdir" || die "cannot change back to start dir\n";
+
+# add $distname to MANIFEST
+manifest_add;
 
 # pretty self explanatory by the function name
 print "--------------------------------------------------\n";

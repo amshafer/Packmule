@@ -1,0 +1,8 @@
+PKGS:
+ - nethack36
+ - fish
+CUSTOM:
+ ~/.bashrc : /root/.bashrc
+ ~/.zshrc : /root/.zshrc
+
+

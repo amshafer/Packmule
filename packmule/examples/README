@@ -1,0 +1,18 @@
+Testing Utilities For Packmule:
+
+TestPack
+
+testpack.sh holds the simplest run command. Because the script is not versatile, it requires the directory "~/hyve/.iso/" to exist and contain a particular installation image of FreeBSD-11.1. "~/hyve" is where I keep all my VM materials as seen in the "freebsd-tools/vm-util/" directory. As a result, this script is more useful to me than it is to you and I have included it only as a working example.
+
+Config Files
+
+A handful of yaml packing lists are included. These showcase the syntax needed for packmule to install custom content.
+
+YAML Format
+
+   PKGS:
+    - package1
+    - package2
+   CUSTOM:
+    /src/path : /destination/path
+

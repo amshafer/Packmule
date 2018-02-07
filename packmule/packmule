@@ -182,10 +182,15 @@ for my $p (@packages) {
     `$pkg install $p\n`;
 }
 
-#dereference hash CUSTOM references
+# dereference hash CUSTOM references
 my %customs = %{$config->{CUSTOM}};
 for my $c (keys %customs){
     my $val = %customs{$c};
+    
+    # make the directory to install to 
+    my $valdir = `dirname $pkgroot/$val`
+    `mkdir -p $valdir`
+
     print "cp $c $pkgroot/$val\n";
     `cp $c $pkgroot/$val\n`;
 }

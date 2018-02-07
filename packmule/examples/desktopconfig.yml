@@ -1,0 +1,15 @@
+PKGS:
+ - gnome3-lite
+ - zsh
+ - emacs
+ - vim
+ - libreoffice
+ - chromium
+ - firefox
+ - nvidia-driver
+CUSTOM:
+ ~/.shrc : /root/.shrc
+ ~/.bashrc : /root/.bashrc
+ ~/.zshrc : /root/.zshrc
+ ~/.emacs.d : /root/.emacs.d
+ ~/.vimrc : /root/.vimrc

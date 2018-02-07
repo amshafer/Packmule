@@ -1,0 +1,17 @@
+PKGS:
+ - zsh
+ - mysql57-client
+ - mysql57-server
+ - mongodb
+ - nginx
+ - apache24
+ - maven
+ - perl5
+ - openjdk8
+ - awscli
+CUSTOM:
+ ~/.shrc : /root/.shrc
+ ~/.bashrc : /root/.bashrc
+ ~/.zshrc : /root/.zshrc
+ ~/.emacs.d : /root/.emacs.d
+ ~/.vimrc : /root/.vimrc

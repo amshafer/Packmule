@@ -1,6 +1,7 @@
 PKGS:
  - nethack36
- - fish
+ - zsh
+ - mongodb
 CUSTOM:
  ~/.bashrc : /root/.bashrc
  ~/.zshrc : /root/.zshrc

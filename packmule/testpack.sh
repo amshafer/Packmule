@@ -5,6 +5,6 @@
 
 USER=ashafer
 INSTALLDISK="~${USER}/hyve/.iso/FreeBSD-11.1-RELEASE-amd64-disc1.iso"
-YAML_FILE="exampleconfig.yml"
+YAML_FILE="examples/exampleconfig.yml"
 
 ./packmule -y ${YAML_FILE} ${INSTALLDISK}

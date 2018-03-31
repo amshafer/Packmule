@@ -1,23 +1,14 @@
 				      packmule
                                     Austin Shafer
 
-Packmule fills a FreeBSD installation .iso with custom packages. The added packages are 
-installed along with the regular contents of FreeBSD. Useful for generating install images 
-with all your normal utilities included.
+Packmule fills a FreeBSD installation .iso with custom packages. The added packages are installed along with the regular contents of FreeBSD. Useful for generating install images with all your normal utilities included.
 
      Usage: packmule [-y config.yml]
      	    	     [-D-R]
 		     [--no-pkg-scripts -I]
 		     <FreeBSD-installation.iso>
 
-Packmule will install packages and custom content described by the config YAML file. This 
-makes describing a packing list very readable and efficient.  The default config is the file 
-./packmule.yml. The config file can be specified with the "-y" argument. There are two major 
-sections of the config, PKGS and CUSTOM. PKGS should simply be a list of package names to be 
-installed with the "pkg" utility. CUSTOM should be a list of hashes for installing software not 
-installable by PKGS. CUSTOM's keys should be a location of a file to install on the computer 
-running packmule. The values should be the location to install the key files at under the 
-installation image.
+Packmule will install packages and custom content described by the config YAML file. This makes describing a packing list very readable and efficient.  The default config is the file ./packmule.yml. The config file can be specified with the "-y" argument. There are two major sections of the config, PKGS and CUSTOM. PKGS should simply be a list of package names to be installed with the "pkg" utility. CUSTOM should be a list of hashes for installing software not installable by PKGS. CUSTOM's keys should be a location of a file to install on the computer running packmule. The values should be the location to install the key files at under the installation image.
 
 OPTIONS:
 	-y config.yml
@@ -48,19 +39,15 @@ PKGS:						# installs using "pkg"
  - gnome3					# pkg install gnome3
 CUSTOM:						# copy custom files into install image
  /etc/resolv.conf : /etc/resolv.conf  		# copy host's resolv.conf to image 
- /etc/hosts : /etc/hosts			# copy host's hosts to image 
+ /etc/hosts : /etc/hosts			# copy host's hosts to image
+INSTALLERCONFIG ~/installerconfig		# install configuration script for
+						# unattended installs
 
-The above example is much smaller than what is useful. This configuration will install perl, 
-nethack, and gnome3 in the installation image. It also copies in useful files such as resolv.conf 
-and hosts. This is useful for installing custom configuration files automatically on a system, 
-particularly in the case of VM's. A installation image could use this to include your rc.conf, 
-.bashrc, .emacs, etc.
+The above example is much smaller than what is useful. This configuration will install perl, nethack, and gnome3 in the installation image. It also copies in useful files such as resolv.conf and hosts. This is useful for installing custom configuration files automatically on a system, particularly in the case of VM's. A installation image could use this to include your rc.conf, .bashrc, .emacs, etc.
 
 HOW IT WORKS:
 
-Packmule was reborn out of a shell script called bsdpack.sh. bsdpack was rewritten because of its 
-overcomplicated configuration setup and inefficient string operations. Packmule added the use of 
-YAML and Perl's regex functionality. The underlying install loading functions remained the same. 
+Packmule was reborn out of a shell script called bsdpack.sh. bsdpack was rewritten because of its overcomplicated configuration setup and inefficient string operations. Packmule added the use of YAML and Perl's regex functionality. The underlying install loading functions remained the same. 
 
 The tool works in five major stages:
 
@@ -78,29 +65,12 @@ The tool works in five major stages:
 
 
 LIMITATIONS:
-	The main limitation of packmule is that user and group creation may fail during the
-pre-install scripts on certian packages. An example of this is mongodb. Packmule uses 'pkg -r'
-to install packages under the '$pkgroot' directory (/tmp/bsd_iso_pkg/). The '-r' flag is not
-a full chroot, meaning that the passwd db files must go through a hack involving copying them
-into '$pkgroot' and then back to '$workroot'. This is clumsy and not ideal, but is necessary to
-have packages create groups upon installation. For packages that have issues of this type, use
-the '--no-pkg-scripts' flag to ignore the pre-installation scripts. This limits the usefulness
-but is a useful workaround.
-       	 As an example, mongodb attempts to create a user and a group before it is installed.
-Packmule will successfully create these, but the pre-install script for the mongodb pkg still
-fails under certain conditions. Because packmule does not do a full chroot when installing,
-mongodb's pre-install script will check if the host machine has a mongodb user/group. If it
-does not, the script fails even though packmule has made the user/group in the installation
-image's passwd db. Running '-I' keeps this error from occurring but means the user must
-manually create the user/group after installation.
+	The main limitation of packmule is that user and group creation may fail during the pre-install scripts on certian packages. An example of this is mongodb. Packmule uses 'pkg -r' to install packages under the '$pkgroot' directory (/tmp/bsd-iso-pkg/). The '-r' flag is not a full chroot, meaning that the passwd db files must go through a hack involving copying them into '$pkgroot' and then back to '$workroot'. This is clumsy and not ideal, but is necessary to have packages create groups upon installation. For packages that have issues of this type, use the '--no-pkg-scripts' flag to ignore the pre-installation scripts. This limits the usefulness but is a useful workaround.
+       	 As an example, mongodb attempts to create a user and a group before it is installed. Packmule will successfully create these, but the pre-install script for the mongodb pkg still fails under certain conditions. Because packmule does not do a full chroot when installing, mongodb's pre-install script will check if the host machine has a mongodb user/group. If it does not, the script fails even though packmule has made the user/group in the installation image's passwd db. Running '-I' keeps this error from occurring but means the user must manually create the user/group after installation.
 
 Testing Utilities For Packmule:
 
-testpack.sh holds the simplest run command. The script is not versatile: it requires the
-directory "~/hyve/.iso/" to exist and contain a particular installation image of FreeBSD-11.1.
-"~/hyve" is where I keep all my VM materials as seen in the "freebsd-tools/vm-util/" directory.
-As a result, this script is more useful to me than it is to you and I have included it only as
-an example.
+testpack.sh holds the simplest run command. The script is not versatile: it requires the directory "~/hyve/.iso/" to exist and contain a particular installation image of FreeBSD-11.1. "~/hyve" is where I keep all my VM materials as seen in the "freebsd-tools/vm-util/" directory. As a result, this script is more useful to me than it is to you and I have included it only as an example.
 
 
 AUTHOR:

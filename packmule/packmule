@@ -2,20 +2,20 @@
 
 # ###############################################
 #
-# mule: make unattended loading environment
+# packmule: make unattended loading environment
 #
 # Austin Shafer - 2018
 #     ashaferian@gmail.com
 #
 # ###############################################
 
-# This program is designed to fill an freebsd installation image 
+# This program is designed to fill an freebsd installation image
 # with any packages supplied by the user. This results in an image
 # which holds extra utilities installed by the user.
 
 # The script mounts the .iso image under /mnt/bsd_iso and copies
-# the file system to /tmp/bsd_iso_work. Packages and software is
-# added to under /tmp/bsd_iso_work and written to a new .iso image
+# the file system to /tmp/bsd-iso-work. Packages and software is
+# added to under /tmp/bsd-iso-work and written to a new .iso image
 
 use strict;
 
@@ -26,9 +26,9 @@ use Digest::SHA;
 # global variables
 my $mntdir = "/mnt/bsd_iso";
 # directory holding copy of original iso
-my $workroot = "/tmp/bsd_iso_work";
+my $workroot = "/tmp/bsd-iso-work.$$";
 # directory where custom software is installed
-my $pkgroot = "/tmp/bsd_iso_pkgs";
+my $pkgroot = "/tmp/bsd-iso-pkgs.$$";
 my $distdir = "$workroot/usr/freebsd-dist";
 my $md_dev = 4;
 
@@ -38,11 +38,12 @@ my $distname = "packmule-pkgs.txz";
 # the packing list config file
 my $plist = "packmule.yml";
 # the name of the image to generate
-my $isoname = "null";
+my $isoname;
 
 # debug option
 # will do everything except generate the iso
-my $DEBUG = undef;
+my $DEBUG;
+my $REMOVE;
 
 # ################################################
 # Function declarations
@@ -54,8 +55,8 @@ sub mount_img () {
     # NOTE:
     #       md node should be /dev/md${MD_DEV} for default
     # create vnode to mount under
-    `mdconfig -a -t vnode -f $isoname -u $md_dev`;
-    `mount -t cd9660 /dev/md$md_dev $mntdir`;
+    system("mdconfig -a -t vnode -f $isoname -u $md_dev");
+    system("mount -t cd9660 /dev/md$md_dev $mntdir");
 }
 
 # ################################################
@@ -63,16 +64,16 @@ sub mount_img () {
 sub unmount_img () {
     print "Unmounting $isoname from $mntdir\n";
 
-    `umount $mntdir`;
+    system("umount $mntdir");
     # delete vnode (default is /dev/md${MD_DEV})
-    `mdconfig -d -u $md_dev`;
+    system("mdconfig -d -u $md_dev");
 }
 
 # ################################################
 # adds $distname to /usr/freebsd-dist/MANIFEST
 sub manifest_add () {
     my $distdir = "/usr/freebsd-dist/";
-    
+
     open(my $dist, "<", "$workroot/$distdir/$distname");
     binmode($dist);
 
@@ -81,7 +82,7 @@ sub manifest_add () {
     close $dist;
 
     # calculate number of archived packages
-    my $nfiles = `tar -t -f $workroot/$distdir/$distname | wc -l`;
+    my $nfiles = system("tar -t -f $workroot/$distdir/$distname | wc -l");
     # trim whitespace
     $nfiles =~ s/[^0-9]//g;
 
@@ -111,7 +112,7 @@ sub write_new_img () {
     if ($newisoname =~ /(([^-]*)-){4}/) {
 	$target = $2;
     }
-    
+
     # construct volume label from isoname
     my $volume_label;
     if ($newisoname =~ /-(.*)-.*/) {
@@ -123,7 +124,8 @@ sub write_new_img () {
     print "VOLUME_LABEL = $volume_label\n";
 
     # run machine dependent script to build install .iso
-    `sh /usr/src/release/$target/mkisoimages.sh -b $volume_label $newisoname $workroot`;
+    system("sh /usr/src/release/$target/mkisoimages.sh -b $volume_label "
+	   . "$newisoname $workroot");
 }
 
 # ################################################
@@ -136,43 +138,43 @@ sub write_new_img () {
 # copy password db so that
 # installed packages can create groups
 sub link_passwd () {
-    `mkdir -p $pkgroot/etc/`;
-    
-    `cp $workroot/etc/passwd $pkgroot/etc/passwd`;
-    `cp $workroot/etc/master.passwd $pkgroot/etc/master.passwd`;
-    `cp $workroot/etc/pwd.db $pkgroot/etc/pwd.db`;
-    `cp $workroot/etc/spwd.db $pkgroot/etc/spwd.db`;
-    `cp $workroot/etc/group $pkgroot/etc/group`;
-    `cp $workroot/etc/shells $pkgroot/etc/shells`; 
+    system("mkdir -p $pkgroot/etc/");
+
+    system("cp $workroot/etc/passwd $pkgroot/etc/passwd");
+    system("cp $workroot/etc/master.passwd $pkgroot/etc/master.passwd");
+    system("cp $workroot/etc/pwd.db $pkgroot/etc/pwd.db");
+    system("cp $workroot/etc/spwd.db $pkgroot/etc/spwd.db");
+    system("cp $workroot/etc/group $pkgroot/etc/group");
+    system("cp $workroot/etc/shells $pkgroot/etc/shells");
 }
 
 # ################################################
 # remove password db links so that
 # installed packages can create groups
 sub unlink_passwd () {
-    `cp $pkgroot/etc/passwd $workroot/etc/passwd`;
-    `cp $pkgroot/etc/master.passwd $workroot/etc/master.passwd`;
-    `cp $pkgroot/etc/pwd.db $workroot/etc/pwd.db`;
-    `cp $pkgroot/etc/spwd.db $workroot/etc/spwd.db`;
-    `cp $pkgroot/etc/group $workroot/etc/group`;
-    `cp $pkgroot/etc/shells $workroot/etc/shells`; 
+    system("cp $pkgroot/etc/passwd $workroot/etc/passwd");
+    system("cp $pkgroot/etc/master.passwd $workroot/etc/master.passwd");
+    system("cp $pkgroot/etc/pwd.db $workroot/etc/pwd.db");
+    system("cp $pkgroot/etc/spwd.db $workroot/etc/spwd.db");
+    system("cp $pkgroot/etc/group $workroot/etc/group");
+    system("cp $pkgroot/etc/shells $workroot/etc/shells");
 
-    `rm $pkgroot/etc/passwd`;    
-    `rm $pkgroot/etc/master.passwd`;
-    `rm $pkgroot/etc/pwd.db`;
-    `rm $pkgroot/etc/spwd.db`;
-    `rm $pkgroot/etc/group`;
-    `rm $pkgroot/etc/shells`; 
+    system("rm $pkgroot/etc/passwd");
+    system("rm $pkgroot/etc/master.passwd");
+    system("rm $pkgroot/etc/pwd.db");
+    system("rm $pkgroot/etc/spwd.db");
+    system("rm $pkgroot/etc/group");
+    system("rm $pkgroot/etc/shells");
 }
 
 # ################################################
 # removes directory listings
 sub remove_dirs() {
-    `rm -rf $workroot`;
-    `rm -rf $pkgroot`;
+    system("rm -rf $workroot");
+    system("rm -rf $pkgroot");
 }
 
-# ################################################ 
+# ################################################
 # BEGIN MAIN
 # ################################################
 
@@ -187,22 +189,19 @@ while (@ARGV != 0) {
 
     } elsif ($arg eq "-D") {
 	$DEBUG = 1;
-	
+
     } elsif ($arg eq "--no-pkg-scripts" or $arg eq "-I") {
 	# do not run pre-install / post-install scripts for
 	# compatibility sake. Some scripts fail due to the
 	# '-r' option on pkg
-	$pkg = "export ASSUME_ALWAYS_YES=yes; pkg -r $pkgroot install -I ";
+	$pkg .= " -I ";
 
     } elsif ($arg eq "-R") {
-	print "packmule: Removing mounts.\n";
-	remove_dirs();
-	unmount_img();
-	exit(0);
-
-    } elsif ($isoname eq "null") {
-	$isoname = $arg;
+	$REMOVE = 1;
 	
+    } elsif (!defined($isoname)) {
+	$isoname = $arg;
+
     } else {
 	print "Skipping unrecognized argument $arg\n";
     }
@@ -210,19 +209,24 @@ while (@ARGV != 0) {
 
 # #######################
 # isoname must be set
-if ($isoname eq "null") {
+if (!defined($isoname)) {
     print "Usage: packmule [-y /path/to/config.yml] isoname\n";
     print "       (Default config is ./packmule.yaml)\n";
     exit(1);
-}
+} elsif (!defined($REMOVE)) {
+    print "packmule: Removing mounts.\n";
+    remove_dirs();
+    unmount_img();
+    exit(0);
+} 
 
 my $config = YAML::LoadFile($plist);
 
 # create directories if needed
 remove_dirs;
-`mkdir -p $mntdir`;
-`mkdir -p $workroot`;
-`mkdir -p $pkgroot`;
+system("mkdir -p $mntdir");
+system("mkdir -p $workroot");
+system("mkdir -p $pkgroot");
 
 # mount the .iso
 mount_img;
@@ -231,7 +235,7 @@ mount_img;
 print "--------------------------------------------------\n";
 print "Copying filesystem from $mntdir to $workroot...\n";
 print "--------------------------------------------------\n";
-`cp -R $mntdir/* $workroot/`;
+system("cp -R $mntdir/* $workroot/");
 
 # use pkg to fill new image tree
 print "--------------------------------------------------\n";
@@ -248,28 +252,33 @@ link_passwd();
 my @packages = @{$config->{PKGS}};
 for my $p (@packages) {
     print "$pkg install $p\n";
-    `$pkg $p\n`;
+    system("$pkg $p\n");
 }
 
 # dereference hash CUSTOM references
 my %customs = %{$config->{CUSTOM}};
 for my $c (keys %customs) {
     my $val = %customs{$c};
-    
-    # make the directory to install to 
-    my $valdir = `dirname $pkgroot/$val`;
-    `mkdir -p $valdir`;
+
+    # make the directory to install to
+    my $valdir = system("dirname $pkgroot/$val");
+    system("mkdir -p $valdir");
 
     print "cp $c $pkgroot/$val\n";
-    `cp $c $pkgroot/$val\n`;
+    system("cp $c $pkgroot/$val\n");
+}
+
+my $installerconfig = $config->{INSTALLERCONFIG};
+if ($installerconfig) {
+    system("cp $installerconfig $workroot/etc/");
 }
 
 # clear pkg files for efficiency
-`rm -rf $pkgroot/var/cache/pkg`;
-`rm -rf $pkgroot/var/db/pkg`;
+system("rm -rf $pkgroot/var/cache/pkg");
+system("rm -rf $pkgroot/var/db/pkg");
 
 # check if DEBUG is defined
-if (length $DEBUG) {
+if ($DEBUG) {
     # stop so we can check out the mounted files
     print "--------------------------------------------------\n";
     print "DEBUG flag set. Not generating iso image.\n";
@@ -288,7 +297,7 @@ print "--------------------------------------------------\n";
 my $startdir = getcwd;
 
 chdir "$pkgroot" || die "cannot change to $pkgroot\n";
-`tar -cvJpf $distdir/$distname ./`;
+system("tar -cvJpf $distdir/$distname ./");
 chdir "$startdir" || die "cannot change back to start dir\n";
 
 # add $distname to MANIFEST
@@ -305,3 +314,6 @@ print "Deleting $workroot...\n";
 print "--------------------------------------------------\n";
 remove_dirs;
 unmount_img;
+
+# bye
+exit(0);

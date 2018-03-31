@@ -86,12 +86,22 @@ into '$pkgroot' and then back to '$workroot'. This is clumsy and not ideal, but 
 have packages create groups upon installation. For packages that have issues of this type, use
 the '--no-pkg-scripts' flag to ignore the pre-installation scripts. This limits the usefulness
 but is a useful workaround.
-       	 As an example, mongodb attempts to create a user and a group before it is installed. Packmule
-will successfully create these, but the pre-install script for the mongodb pkg still fails under certain
-conditions. Because packmule does not do a full chroot when installing, mongodb's pre-install script
-will check if the host machine has a mongodb user/group. If it does not, the script fails even though
-packmule has made the user/group in the installation image's passwd db. Running '-I' keeps this error
-from occurring but means the user must manually create the user/group after installation.
+       	 As an example, mongodb attempts to create a user and a group before it is installed.
+Packmule will successfully create these, but the pre-install script for the mongodb pkg still
+fails under certain conditions. Because packmule does not do a full chroot when installing,
+mongodb's pre-install script will check if the host machine has a mongodb user/group. If it
+does not, the script fails even though packmule has made the user/group in the installation
+image's passwd db. Running '-I' keeps this error from occurring but means the user must
+manually create the user/group after installation.
+
+Testing Utilities For Packmule:
+
+testpack.sh holds the simplest run command. The script is not versatile: it requires the
+directory "~/hyve/.iso/" to exist and contain a particular installation image of FreeBSD-11.1.
+"~/hyve" is where I keep all my VM materials as seen in the "freebsd-tools/vm-util/" directory.
+As a result, this script is more useful to me than it is to you and I have included it only as
+an example.
+
 
 AUTHOR:
 	Austin Shafer - ashaferian@gmail.com

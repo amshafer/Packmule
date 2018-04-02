@@ -59,11 +59,12 @@ use Cwd;
 use Digest::SHA;
 
 # global variables
-my $mntdir = "/mnt/bsd_iso";
+my $mntdir = "/mnt/packmule-iso";
+my $rootprefix = "/tmp/packmule";
 # directory holding copy of original iso
-my $workroot = "/tmp/bsd-iso-work.$$";
+my $workroot = "$rootprefix-work.$$";
 # directory where custom software is installed
-my $pkgroot = "/tmp/bsd-iso-pkgs.$$";
+my $pkgroot = "$rootprefix-pkgs.$$";
 my $distdir = "$workroot/usr/freebsd-dist";
 my $md_dev = 4;
 
@@ -117,7 +118,7 @@ sub manifest_add () {
     close $dist;
 
     # calculate number of archived packages
-    my $nfiles = system("tar -t -f $workroot/$distdir/$distname | wc -l");
+    my $nfiles = `tar -t -f $workroot/$distdir/$distname | wc -l`;
     # trim whitespace
     $nfiles =~ s/[^0-9]//g;
 
@@ -205,8 +206,7 @@ sub unlink_passwd () {
 # ################################################
 # removes directory listings
 sub remove_dirs() {
-    system("rm -rf $workroot");
-    system("rm -rf $pkgroot");
+    system("rm -rf $rootprefix*");
 }
 
 # ################################################
@@ -243,17 +243,18 @@ while (@ARGV != 0) {
 }
 
 # #######################
+if (defined($REMOVE)) {
+    print "packmule: Removing mounts.\n";
+    remove_dirs();
+    unmount_img();
+    exit(0);
+}
 # isoname must be set
 if (!defined($isoname)) {
     print "Usage: packmule [-y /path/to/config.yml] isoname\n";
     print "       (Default config is ./packmule.yaml)\n";
     exit(1);
-} elsif (!defined($REMOVE)) {
-    print "packmule: Removing mounts.\n";
-    remove_dirs();
-    unmount_img();
-    exit(0);
-} 
+}  
 
 my $config = YAML::LoadFile($plist);
 
@@ -296,7 +297,7 @@ for my $c (keys %customs) {
     my $val = %customs{$c};
 
     # make the directory to install to
-    my $valdir = system("dirname $pkgroot/$val");
+    my $valdir = `dirname $pkgroot/$val`;
     system("mkdir -p $valdir");
 
     print "cp $c $pkgroot/$val\n";
@@ -311,15 +312,6 @@ if ($installerconfig) {
 # clear pkg files for efficiency
 system("rm -rf $pkgroot/var/cache/pkg");
 system("rm -rf $pkgroot/var/db/pkg");
-
-# check if DEBUG is defined
-if ($DEBUG) {
-    # stop so we can check out the mounted files
-    print "--------------------------------------------------\n";
-    print "DEBUG flag set. Not generating iso image.\n";
-    print "--------------------------------------------------\n";
-    exit(0);
-}
 
 # remove password db links
 unlink_passwd();
@@ -337,6 +329,15 @@ chdir "$startdir" || die "cannot change back to start dir\n";
 
 # add $distname to MANIFEST
 manifest_add;
+
+# check if DEBUG is defined
+if ($DEBUG) {
+    # stop so we can check out the mounted files
+    print "--------------------------------------------------\n";
+    print "DEBUG flag set. Not generating iso image.\n";
+    print "--------------------------------------------------\n";
+    exit(0);
+}
 
 # pretty self explanatory by the function name
 print "--------------------------------------------------\n";

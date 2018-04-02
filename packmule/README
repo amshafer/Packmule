@@ -30,6 +30,8 @@ OPTIONS:
 
 CONFIGURATION:
 
+	If you plan on running packmule with "sudo" ensure that all home directory shortcuts contain the name of the user who they belong to. (i.e. ~/ would be replaced with ~username/) It is even better to simply use absolute pathnames to avoid confusion.
+
 Here is an example config.yml:
 
 ---
@@ -40,7 +42,7 @@ PKGS:						# installs using "pkg"
 CUSTOM:						# copy custom files into install image
  /etc/resolv.conf : /etc/resolv.conf  		# copy host's resolv.conf to image 
  /etc/hosts : /etc/hosts			# copy host's hosts to image
-INSTALLERCONFIG : ~/installerconfig		# install configuration script for
+INSTALLERCONFIG : ~user/installerconfig		# install configuration script for
 						# unattended installs (man bsdinstall)
 
 The above example is much smaller than what is useful. This configuration will install perl, nethack, and gnome3 in the installation image. It also copies in useful files such as resolv.conf and hosts. This is useful for installing custom configuration files automatically on a system, particularly in the case of VM's. A installation image could use this to include your rc.conf, .bashrc, .emacs, etc.

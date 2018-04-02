@@ -3,7 +3,7 @@ PKGS:
  - zsh
  - mongodb
 CUSTOM:
- ~/.bashrc : /root/.bashrc
- ~/.zshrc : /root/.zshrc
+ ~ashafer/.bashrc : /root/.bashrc
+ ~ashafer/.zshrc : /root/.zshrc
 
 

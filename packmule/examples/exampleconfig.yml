@@ -5,5 +5,4 @@ PKGS:
 CUSTOM:
  ~ashafer/.bashrc : /root/.bashrc
  ~ashafer/.zshrc : /root/.zshrc
-
-
+INSTALLERCONFIG : ~ashafer/git/freebsd-tools/packmule/examples/installerconfig

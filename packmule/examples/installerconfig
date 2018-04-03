@@ -1,0 +1,5 @@
+PARTITIONS=vtbd0
+DISTRIBUTIONS="kernel.txz base.txz packmule-pkgs.txz"
+
+#! /bin/sh
+echo "sshd_enable=\"YES\"" >> /etc/rc.conf

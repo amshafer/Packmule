@@ -1,9 +1,12 @@
 PKGS:
+ - nethack36
+ - gnome3-lite
  - zsh
  - emacs
  - vim
  - chromium
  - nvidia-driver
+ - mongodb
 CUSTOM:
  ~/.shrc : /root/.shrc
  ~/.bashrc : /root/.bashrc

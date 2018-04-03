@@ -185,25 +185,6 @@ sub link_passwd () {
 }
 
 # ################################################
-# remove password db links so that
-# installed packages can create groups
-sub unlink_passwd () {
-    system("cp $pkgroot/etc/passwd $workroot/etc/passwd");
-    system("cp $pkgroot/etc/master.passwd $workroot/etc/master.passwd");
-    system("cp $pkgroot/etc/pwd.db $workroot/etc/pwd.db");
-    system("cp $pkgroot/etc/spwd.db $workroot/etc/spwd.db");
-    system("cp $pkgroot/etc/group $workroot/etc/group");
-    system("cp $pkgroot/etc/shells $workroot/etc/shells");
-
-    system("rm $pkgroot/etc/passwd");
-    system("rm $pkgroot/etc/master.passwd");
-    system("rm $pkgroot/etc/pwd.db");
-    system("rm $pkgroot/etc/spwd.db");
-    system("rm $pkgroot/etc/group");
-    system("rm $pkgroot/etc/shells");
-}
-
-# ################################################
 # removes directory listings
 sub remove_dirs() {
     system("rm -rf $rootprefix*");
@@ -312,9 +293,6 @@ if ($installerconfig) {
 # clear pkg files for efficiency
 system("rm -rf $pkgroot/var/cache/pkg");
 system("rm -rf $pkgroot/var/db/pkg");
-
-# remove password db links
-unlink_passwd();
 
 # pack up the custom stuff as a distribution tar
 print "--------------------------------------------------\n";

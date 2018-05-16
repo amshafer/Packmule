@@ -137,8 +137,10 @@ sub write_new_img () {
 
     # change name from FreeBSD___.iso to FreeBSD___-packed.iso
     my $newisoname;
-    if ($isoname =~ /.*\/([^\/]*).iso/) {
-	$newisoname = "$1-packed.iso";
+    if ($isoname =~ /.*\/([^\/]*).iso|([^\/]*).iso/) {
+	$newisoname = "$1$2-packed.iso";
+    } else {
+	$newisoname = "FreeBSD-packed.iso";
     }
 
     print "Writing new install package ./$newisoname\n";
@@ -266,33 +268,33 @@ link_passwd();
 
 # install packages in directory to tar
 # dereference array PKGS references
-my @packages = @{$config->{PKGS}};
-for my $p (@packages) {
-    print "$pkg install $p\n";
-    system("$pkg $p\n");
+if ($config->{PKGS}) {
+    my @packages = @{$config->{PKGS}};
+    for my $p (@packages) {
+	print "$pkg install $p\n";
+	system("$pkg $p\n");
+    }
 }
 
 # dereference hash CUSTOM references
-my %customs = %{$config->{CUSTOM}};
-for my $c (keys %customs) {
-    my $val = %customs{$c};
+if ($config->{CUSTOM}) {
+    my %customs = %{$config->{CUSTOM}};
+    for my $c (keys %customs) {
+	my $val = %customs{$c};
 
-    # make the directory to install to
-    my $valdir = `dirname $pkgroot/$val`;
-    system("mkdir -p $valdir");
+	# make the directory to install to
+	my $valdir = `dirname $pkgroot/$val`;
+	system("mkdir -p $valdir");
 
-    print "cp $c $pkgroot/$val\n";
-    system("cp $c $pkgroot/$val\n");
+	print "cp -r $c $pkgroot/$val\n";
+	system("cp -r $c $pkgroot/$val\n");
+    }
 }
 
 my $installerconfig = $config->{INSTALLERCONFIG};
 if ($installerconfig) {
     system("cp $installerconfig $workroot/etc/");
 }
-
-# clear pkg files for efficiency
-system("rm -rf $pkgroot/var/cache/pkg");
-system("rm -rf $pkgroot/var/db/pkg");
 
 # pack up the custom stuff as a distribution tar
 print "--------------------------------------------------\n";

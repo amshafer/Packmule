@@ -1,0 +1,13 @@
+PKGS:
+ - linux_base-c7
+ - gdb
+CUSTOM:
+ ~ashafer/bin/inotify_test/inote : /root/inote
+ ~ashafer/bin/inotify_test/inote.c : /root/inote.c 
+ /usr/obj/usr/src/amd64.amd64/release/disc1/boot/kernel/ : /boot/kernel/
+ /usr/obj/usr/src/amd64.amd64/release/dist/kernel/usr/lib/debug/boot/kernel/ : /usr/lib/debug/boot/kernel/
+ /usr/src/sys/compat/linux/ : /usr/src/sys/compat/linux/
+ /usr/src/sys/kern/ : /usr/src/sys/kern/
+ ~ashafer/.ssh/id_rsa.pub : /root/.ssh/authorized_keys
+INSTALLERCONFIG: ~ashafer/git/freebsd-tools/packmule/examples/installerconfig
+ 

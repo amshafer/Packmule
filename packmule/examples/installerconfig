@@ -3,3 +3,5 @@ DISTRIBUTIONS="kernel.txz base.txz packmule-pkgs.txz"
 
 #! /bin/sh
 echo "sshd_enable=\"YES\"" >> /etc/rc.conf
+echo "hint.uart.0.flags=\"0x90\"" >> /boot/loader.conf
+poweroff

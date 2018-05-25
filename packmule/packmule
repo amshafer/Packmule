@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl
+#! /usr/bin/perl
 
 # ###############################################
 #
@@ -61,6 +61,13 @@ use Digest::SHA;
 # global variables
 my $mntdir = "/mnt/packmule-iso";
 my $rootprefix = "/tmp/packmule";
+
+# location of mkisomages.sh scripts
+my $archprefix = "/usr/src/release/";
+my $makescript = "/mkisoimages.sh";
+# does /usr/src/release exist
+my $release_exists;
+
 # directory holding copy of original iso
 my $workroot = "$rootprefix-work.$$";
 # directory where custom software is installed
@@ -132,6 +139,17 @@ sub manifest_add () {
 }
 
 # ################################################
+# generates a new image (iso)
+sub make_img {
+    print "VOLUME_LABEL = $_[1]\n";
+
+    # run machine dependent script to build install .iso
+    system("sh $archprefix/$_[0]/$makescript -b $_[1] "
+	   . "$_[2] $workroot");
+}
+
+
+# ################################################
 # writes WORKROOT to a new .iso file
 sub write_new_img () {
 
@@ -159,11 +177,7 @@ sub write_new_img () {
 	$volume_label =~ s/(\.|-)/_/g;
     }
 
-    print "VOLUME_LABEL = $volume_label\n";
-
-    # run machine dependent script to build install .iso
-    system("sh /usr/src/release/$target/mkisoimages.sh -b $volume_label "
-	   . "$newisoname $workroot");
+    make_img $target $volume_label $newisoname;
 }
 
 # ################################################
@@ -196,6 +210,14 @@ sub remove_dirs() {
 # BEGIN MAIN
 # ################################################
 
+# check if /usr/src/release exits. If so, use the $makescript from
+# the src tree instead of packmule's copies
+open $archprefix or $release_exists = 1;
+
+if ($release_exists && $0 =~ /^(.*\/)[^\/]*$/) {
+    $archprefix = $1;
+}
+print "packmule: Using $makescript in $archprefix \n";
 
 # #######################
 # process command line arguments
@@ -239,6 +261,7 @@ if (!defined($isoname)) {
     exit(1);
 }  
 
+# parse pack list
 my $config = YAML::LoadFile($plist);
 
 # create directories if needed

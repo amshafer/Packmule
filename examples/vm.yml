@@ -2,12 +2,11 @@ PKGS:
  - linux_base-c7
  - gdb
 CUSTOM:
- ~ashafer/bin/inotify_test/inote : /root/inote
- ~ashafer/bin/inotify_test/inote.c : /root/inote.c 
- /usr/obj/usr/src/amd64.amd64/release/disc1/boot/kernel/ : /boot/kernel/
- /usr/obj/usr/src/amd64.amd64/release/dist/kernel/usr/lib/debug/boot/kernel/ : /usr/lib/debug/boot/kernel/
- /usr/src/sys/compat/linux/ : /usr/src/sys/compat/linux/
- /usr/src/sys/kern/ : /usr/src/sys/kern/
- ~ashafer/.ssh/id_rsa.pub : /root/.ssh/authorized_keys
-INSTALLERCONFIG: ~ashafer/git/freebsd-tools/packmule/examples/installerconfig
- 
+ /b/ashafer/bin/inotify_test/inote : /root/inote
+ /b/ashafer/bin/inotify_test/inote.c : /root/inote.c
+ /b/ashafer/obj/b/ashafer/src/sys/GENERIC/kernel : /boot/kernel/kernel
+ /b/ashafer/obj/b/ashafer/src/sys/modules/linux64/linux.ko : /boot/kernel/linux.ko 
+ /b/ashafer/obj/b/ashafer/src/sys/modules/linux64/linux64.ko : /boot/kernel/linux64.ko
+ /b/ashafer/obj/b/ashafer/src/sys/GENERIC/kernel.debug : /boot/kernel/kernel.debug
+ /b/ashafer/obj/b/ashafer/src/sys/modules/linux64/linux.ko.debug : /boot/kernel/linux.ko.debug
+ /b/ashafer/obj/b/ashafer/src/sys/modules/linux64/linux64.ko.debug : /boot/kernel/linux64.ko.debug

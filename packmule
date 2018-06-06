@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/local/bin/perl
 
 # ###############################################
 #
@@ -63,7 +63,6 @@ my $mntdir = "/mnt/packmule-iso";
 my $rootprefix = "/tmp/packmule";
 
 # location of mkisomages.sh scripts
-my $archprefix = "/usr/src/release/";
 my $makescript = "/mkisoimages.sh";
 # does /usr/src/release exist
 my $release_exists;
@@ -93,7 +92,7 @@ my $REMOVE;
 # ################################################
 
 # mounts isoname at mntdir
-sub mount_img () {
+sub mount_img {
     print "Mounting $isoname at $mntdir\n";
     # NOTE:
     #       md node should be /dev/md${MD_DEV} for default
@@ -104,7 +103,7 @@ sub mount_img () {
 
 # ################################################
 # unmounts ISONAME at MNTDIR
-sub unmount_img () {
+sub unmount_img {
     print "Unmounting $isoname from $mntdir\n";
 
     system("umount $mntdir");
@@ -114,7 +113,7 @@ sub unmount_img () {
 
 # ################################################
 # adds $distname to /usr/freebsd-dist/MANIFEST
-sub manifest_add () {
+sub manifest_add {
     my $distdir = "/usr/freebsd-dist/";
 
     open(my $dist, "<", "$workroot/$distdir/$distname");
@@ -141,17 +140,18 @@ sub manifest_add () {
 # ################################################
 # generates a new image (iso)
 sub make_img {
-    print "VOLUME_LABEL = $_[1]\n";
+    my ($targ, $vol, $newiso) = @_;
+    
+    print "VOLUME_LABEL = $targ\n";
 
     # run machine dependent script to build install .iso
-    system("sh $archprefix/$_[0]/$makescript -b $_[1] "
-	   . "$_[2] $workroot");
+    system("sh $archprefix/$targ/$makescript -b $vol $newiso $workroot");
 }
 
 
 # ################################################
 # writes WORKROOT to a new .iso file
-sub write_new_img () {
+sub write_new_img {
 
     # change name from FreeBSD___.iso to FreeBSD___-packed.iso
     my $newisoname;
@@ -177,7 +177,7 @@ sub write_new_img () {
 	$volume_label =~ s/(\.|-)/_/g;
     }
 
-    make_img $target $volume_label $newisoname;
+    make_img($target, $volume_label, $newisoname);
 }
 
 # ################################################
@@ -189,7 +189,7 @@ sub write_new_img () {
 # ################################################
 # copy password db so that
 # installed packages can create groups
-sub link_passwd () {
+sub link_passwd {
     system("mkdir -p $pkgroot/etc/");
 
     system("cp $workroot/etc/passwd $pkgroot/etc/passwd");
@@ -202,7 +202,7 @@ sub link_passwd () {
 
 # ################################################
 # removes directory listings
-sub remove_dirs() {
+sub remove_dirs {
     system("rm -rf $rootprefix*");
 }
 
@@ -212,7 +212,7 @@ sub remove_dirs() {
 
 # check if /usr/src/release exits. If so, use the $makescript from
 # the src tree instead of packmule's copies
-open $archprefix or $release_exists = 1;
+open "/usr/src/release/" or $release_exists = 1;
 
 if ($release_exists && $0 =~ /^(.*\/)[^\/]*$/) {
     $archprefix = $1;

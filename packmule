@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl
+#!/usr/bin/env perl
 
 # ###############################################
 #
@@ -58,20 +58,25 @@ use YAML;
 use Cwd;
 use Digest::SHA;
 
-# global variables
-my $mntdir = "/mnt/packmule-iso";
-my $rootprefix = "/tmp/packmule";
+# base prefix of installed location
+my $PREFIX = "/usr/local/share/packmule/";
 
+# global variables
+my $mntdir = "/mnt/packmule-iso/";
+my $rootprefix = "/tmp/packmule/";
+
+# location of archdep scripts
+my $archprefix = "$PREFIX/mkiso/";
 # location of mkisomages.sh scripts
 my $makescript = "/mkisoimages.sh";
 # does /usr/src/release exist
-my $release_exists;
+my $release_exists = 1;
 
 # directory holding copy of original iso
 my $workroot = "$rootprefix-work.$$";
 # directory where custom software is installed
 my $pkgroot = "$rootprefix-pkgs.$$";
-my $distdir = "$workroot/usr/freebsd-dist";
+my $distdir = "$workroot/usr/freebsd-dist/";
 my $md_dev = 4;
 
 my $pkg = "export ASSUME_ALWAYS_YES=yes; pkg -r $pkgroot install";
@@ -211,11 +216,13 @@ sub remove_dirs {
 # ################################################
 
 # check if /usr/src/release exits. If so, use the $makescript from
-# the src tree instead of packmule's copies
-open "/usr/src/release/" or $release_exists = 1;
+# the src tree instead of packmule's copies. This should catch
+# new mkisoimages scripts if the users tree is populated with them
+open "/usr/src/release/" or $release_exists = 0;
 
-if ($release_exists && $0 =~ /^(.*\/)[^\/]*$/) {
-    $archprefix = $1;
+# release_exists is 1 if true
+if ($release_exists) {
+    $archprefix = "/usr/src/release/";
 }
 print "packmule: Using $makescript in $archprefix \n";
 

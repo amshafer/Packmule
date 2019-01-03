@@ -1,4 +1,0 @@
-nethack36
-gtar
-
-

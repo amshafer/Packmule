@@ -1,0 +1,97 @@
+.Dd January 3, 2019
+.Dt PACKMULE 1
+
+.Os
+
+.Sh NAME
+.Nm packmule
+.Nd Creates and packs custom FreeBSD installation images
+
+.Sh SYNOPSIS
+.Nm
+[-DR] [-y config.yml] [--no-pkg-scripts -I] <FreeBSD.iso>
+.Br
+
+
+.Sh DESCRIPTION
+Packmule packs a FreeBSD installation (.iso) image with custom content, making it useful for generating install images with all your normal utilities included. The added packages are installed along with the regular contents of FreeBSD. The generated images have the form \fB*-packed.iso\fR. Installation can proceed as normal with the packed software showing up on the newly installed system alongside the FreeBSD base.
+
+Packmule will install packages and custom content described by the config YAML file. This makes describing a packing list very readable and efficient. The default config is the file \fB./packmule.yml\fR. The config file can be specified with the "-y" argument. There are two major sections of the config, PKGS and CUSTOM. PKGS should simply be a list of package names to be installed with the "pkg" utility. CUSTOM should be a list of key-value pairs for installing software not installable by PKGS. CUSTOM's keys should be a location of a file to install on the computer running packmule. The values should be the location to install the key files at under the installation image. During distribution extraction \fBbsdinstall(8)\fR should show \fBpackmule.txz\fR alongside the other archives as it extracts the added content. Packmule can also create an unattended installation image from a regular installation image using the INSTALLERCONFIG section of the configuration file. 
+
+Packmule is written in Perl, and all variables starting with \fB$\fR in this doc reference the variable names used in the Packmule script. These variables are included to help the reader follow both the script itself and the debugging output if they should choose to read it. The leading \fB$\fR is kept to differentiate these Perl variables from environment variables.
+
+.Sh OPTIONS
+.Bl -tag -width indent
+
+.It Fl D
+The Debug flag. Useful for development. Does everything except tar \fB$pkgroot\fR and create the installation iso. This can be used to see exactly what packmule does as far as installing and copying packages.
+
+.It Fl R
+The Remove flag. Shortcut to unmount packmule's resources and remove its working directories
+
+.It Fl y Ar config.yml
+The '-y' flag specifies the input YAML file to use as a packing list. The default configuation file is './packmule.yml'. The pathname of the config file to use must follow the '-y' flag.
+
+.It Fl I,--no-pkg-scripts
+Used as a workaround to pkg pre-install failures, specifically those caused by failing to create a new user or group. If you encounter pkg install failures try using this option. See the LIMITATIONS section for more info.
+
+.El
+
+.Sh CONFIGURATION
+Packmule is configured using the \fBYAML\fR configuration language. The default configuration file is \fB./packmule.yml\fR but it is recommended to specify a different path using the \fB-y\fR argument. The three main sections are as follows:
+
+.Bl -tag -width indent
+
+.It Ar PKG
+This section holds names of packages to be installed through the \fBpkg(8)\fR tool. They are installed in the new image using the \fB$workroot\fR directory as the root.
+
+.It Ar CUSTOM
+Individual files or directories to be copied into the new image. Values are separated by \fB:\fR, with the value on the left being the source file and the value on the right being the destination. (\fB /path/to/src : /install/location\fR)
+
+.It Ar INSTALLERCONFIG
+A path to an \fBinstallerconfig\fR script to be used for an unattended installation. More information about unattended installations and installerconfigs can be found in \fBbsdinstall(8)\fR
+
+.El
+
+Here is an example configuration (config.yml):
+_____________________________________________
+
+\fBPKGS:\fR
+ - perl5-5.24.3
+ - nethack36
+ - gnome3
+
+\fBCUSTOM:\fR
+ /root/.shrc : /root/.shrc
+ /etc/hosts : /etc/hosts
+
+\fBINSTALLERCONFIG\fR : ~user/installerconfig
+______________________________________________
+
+The above example is much smaller than what is useful. This configuration will install perl, nethack, and gnome3 in the installation image. It also copies individual files such as resolv.conf and hosts. This is useful for installing custom configuration files automatically on a system, particularly in the case of VM's. A installation image could use this to include your rc.conf, .bashrc, .emacs, etc.
+
+.Sh TIPS
+If you plan on running packmule with \fBsudo(8)\fR ensure that all home directory shortcuts contain the name of the user who they belong to. (i.e. ~/ would be replaced with ~username/) It is even better to simply use absolute pathnames to avoid confusion.
+
+.Sh HOW IT WORKS:
+
+Packmule was reborn out of a shell script called bsdpack.sh. bsdpack was rewritten because of its overcomplicated configuration setup and inefficient string operations. Packmule added the use of YAML and Perl's regex functionality. The underlying install loading functions remained the same. 
+
+The tool works in five major stages:
+    1) the .iso is mounted under \fB$mntdir\fR
+    2) contents of the read-only .iso are copied into \fB$workroot\fR
+    3) the plist is read and each package is installed under \fB$pkgroot\fR
+           \fB$pkgroot\fR is compressed and added to \fB$workroot/usr/freebsd-dist\fR
+           to be installed as a distribution file
+    4) The \fB$workroot\fR is written into a installation .iso by the appropriate \fBmkisoimages.sh\fR script
+    5) the .iso is unmounted and all directories are cleaned up
+
+
+.Sh LIMITATIONS:
+        The main limitation of packmule is that user and group creation may fail during the pre-install scripts on certian packages. An example of this is the mongodb package. Packmule uses 'pkg -r' to install packages under the \fB$pkgroot\fR directory (/tmp/bsd-iso-pkg/). The '-r' flag is not a full chroot, meaning that the passwd db files must go through a hack involving copying them into \fB$pkgroot\fR and then back to \fB$workroot\fR. This is clumsy and not ideal, but is necessary to have packages create groups upon installation. For packages that have issues of this type, use the '--no-pkg-scripts' flag to ignore the pre-installation scripts. This limits the usefulness but is a useful workaround.
+         As an example, mongodb attempts to create a user and a group before it is installed. Packmule will successfully create these, but the pre-install script for the mongodb pkg still fails under certain conditions. Because packmule does not do a full chroot when installing, mongodb's pre-install script will check if the host machine has a mongodb user/group. If it does not, the script fails even though packmule has made the user/group in the installation image's passwd db. Running '-I' keeps this error from occurring but means the user must manually create the user/group after installation.
+
+
+.Sh AUTHORS
+.An Austin Shafer
+.Aq ashafer@badland.io

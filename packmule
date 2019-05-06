@@ -312,6 +312,8 @@ print "--------------------------------------------------\n";
 # create temporary password and group files
 link_passwd();
 
+
+######## Install as a distribution package ########
 # install packages in directory to tar
 # dereference array PKGS references
 if ($config->{PKGS}) {
@@ -334,6 +336,29 @@ if ($config->{CUSTOM}) {
 
 	print "cp -r $c $pkgroot/$val\n";
 	system("cp -r $c $pkgroot/$val\n");
+    }
+}
+
+######## Install on the Live CD ########
+if ($config->{LIVE_CD_PKGS}) {
+    my @packages = @{$config->{LIVE_CD_PKGS}};
+    for my $p (@packages) {
+	print "$pkg install $p\n";
+	system("pkg -r $workroot install -y $p\n");
+    }
+}
+
+if ($config->{LIVE_CD_CUSTOM}) {
+    my %customs = %{$config->{LIVE_CD_CUSTOM}};
+    for my $c (keys %customs) {
+	my $val = %customs{$c};
+
+	# make the directory to install to
+	my $valdir = `dirname $workroot/$val`;
+	system("mkdir -p $valdir");
+
+	print "cp -r $c $workroot/$val\n";
+	system("cp -r $c $workroot/$val\n");
     }
 }
 

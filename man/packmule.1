@@ -45,11 +45,17 @@ Packmule is configured using the \fBYAML\fR configuration language. The default 
 
 .Bl -tag -width indent
 
-.It Ar PKG
+.It Ar PKGS
 This section holds names of packages to be installed through the \fBpkg(8)\fR tool. They are installed in the new image using the \fB$workroot\fR directory as the root.
 
 .It Ar CUSTOM
 Individual files or directories to be copied into the new image. Values are separated by \fB:\fR, with the value on the left being the source file and the value on the right being the destination. (\fB /path/to/src : /install/location\fR)
+
+.It Ar LIVE_CD_PKGS
+Same as \fBPKGS\fR, but intalls onto the live cd image instead of the host.
+
+.It Ar LIVE_CD_CUSTOM
+Same as \fBCUSTOM\fR, but intalls onto the live cd image instead of the host.
 
 .It Ar INSTALLERCONFIG
 A path to an \fBinstallerconfig\fR script to be used for an unattended installation. More information about unattended installations and installerconfigs can be found in \fBbsdinstall(8)\fR
@@ -67,6 +73,9 @@ _____________________________________________
 \fBCUSTOM:\fR
  /root/.shrc : /root/.shrc
  /etc/hosts : /etc/hosts
+
+\fBLIVE_CD_PKGS\fR
+ /etc/rc.conf : /etc/rc.conf
 
 \fBINSTALLERCONFIG\fR : ~user/installerconfig
 ______________________________________________
